@@ -132,6 +132,24 @@ namespace ExpressionParser.Tests
             var res = resultExp.Evaluate();
 
             Assert.AreEqual(5, res);
+
+            _strExp = "7-((3+2))";
+            resultExp = _parser.Parse(_strExp);
+
+            res = resultExp.Evaluate();
+
+            Assert.AreEqual(2, res);
+        }
+
+        [Test]
+        public void TestSpaces()
+        {
+            _strExp = "2 + 2";
+            var resultExp = _parser.Parse(_strExp);
+
+            var res = resultExp.Evaluate();
+
+            Assert.AreEqual(4, res);
         }
     }
 }

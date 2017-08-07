@@ -19,57 +19,67 @@ namespace ExpressionParser.Core.Parser
 
         public IExpressionNode Parse(string str)
         {
+            str = _RemoveSpaces(str);
             var exprNode = _Parse(str);
             return new NetExpressionNodeAdapter(exprNode);
         }
 
+        private string _RemoveSpaces(string str)
+        {
+            str = str.Replace(" ", "");
+
+            return str;
+        }
+
         public Expression _Parse(string str)
         {
+            str = _RemoveUselessBrackets(str);
+
             var op = "";
-            int leftEndIndex = -1;
-            int rightStartIndex = - 1;
-            int endIndex = str.Length - 1;
+            int opIndex= -1;
 
-            if (str.Last() == ')' && str.IndexOf('(') != 0)
+            for (int priority = 2; priority >= 0; priority--)
             {
-                op = str[str.IndexOf('(') - 1].ToString();
-                leftEndIndex = str.IndexOf('(') - 2;
-                rightStartIndex = str.IndexOf('(') + 1;
-                endIndex = str.Length - 2;
-            }
-            else
-            {
-                if (str.IndexOf('(') == 0 && str.Last() == ')')
+                var ops = _operaorPriorities.Where(kv => kv.Value == priority).Select(kv => kv.Key);
+                for (var index = str.Length - 1; index >= 0; index--)
                 {
-                    str = str.Substring(1, str.Length - 2);
-                    endIndex -= 2;
-                }
-
-                for (int priority = 2; priority >= 0; priority--)
-                {
-                    var ops = _operaorPriorities.Where(kv => kv.Value == priority).Select(kv => kv.Key);
-                    for (var index = str.Length - 1; index >= 0; index--)
+                    if(str[index] == ')')
                     {
-                        if (ops.Any(op1 => op1 == str[index].ToString()))
+                        index--;
+                        var bracketsCount = 1;
+                        while(bracketsCount != 0)
                         {
-                            op = str[index].ToString();
-                            leftEndIndex = index - 1;
-                            rightStartIndex = index + 1;
-                            break;
+                            if(str[index] == '(')
+                            {
+                                bracketsCount--;
+                            }
+                            if(str[index] == ')')
+                            {
+                                bracketsCount++;
+                            }
+
+                            index--;
                         }
                     }
 
-                    if (op != "")
+                    if (ops.Any(op1 => op1 == str[index].ToString()))
                     {
+                        op = str[index].ToString();
+                        opIndex = index;
                         break;
                     }
+                }
+
+                if (op != "")
+                {
+                    break;
                 }
             }
 
             if (op != "")
             {
-                var leftStr = str.Substring(0, leftEndIndex + 1);
-                var rightStr = str.Substring(rightStartIndex, endIndex - rightStartIndex + 1);
+                var leftStr = str.Substring(0, opIndex);
+                var rightStr = str.Substring(opIndex + 1);
 
                 var leftExpr = _Parse(leftStr);
                 var rightExpr = _Parse(rightStr);
@@ -80,6 +90,16 @@ namespace ExpressionParser.Core.Parser
             {
                 return _ParseConstant(str);
             }
+        }
+
+        private string _RemoveUselessBrackets(string str)
+        {
+            while(str.First()=='(' && str.Last() == ')')
+            {
+                str = str.Substring(1, str.Length - 2);
+            }
+
+            return str;
         }
 
         private Expression _GetNonConstantExpression(string op, Expression left, Expression right)
