@@ -1,5 +1,7 @@
 ﻿using ExpressionParser.Core.Parser;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace ExpressionParser.Tests
 {
@@ -12,7 +14,13 @@ namespace ExpressionParser.Tests
         [SetUp]
         public void Setup()
         {
-            _parser = new NetExpressionParser();
+
+            List<IOperator> operators = new List<IOperator>();
+            operators.Add(new OperatorImpl("+", 0, (left, right) => Expression.Add(left, right)));
+            operators.Add(new OperatorImpl("-", 0, (left, right) => Expression.Subtract(left, right)));
+            operators.Add(new OperatorImpl("*", 1, (left, right) => Expression.Multiply(left, right)));
+            operators.Add(new OperatorImpl("/", 2, (left, right) => Expression.Divide(left, right)));
+            _parser = new NetExpressionParser(operators);
             _strExp = "";
         }
 

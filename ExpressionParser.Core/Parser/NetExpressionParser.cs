@@ -7,14 +7,11 @@ namespace ExpressionParser.Core.Parser
 {
     public class NetExpressionParser : IExpressionParser
     {
-        private IDictionary<string, int> _operaorPriorities = new Dictionary<string, int>();
+        private IEnumerable<IOperator> _operators;
 
-        public NetExpressionParser()
+        public NetExpressionParser(IEnumerable<IOperator> operators)
         {
-            _operaorPriorities.Add("+", 2);
-            _operaorPriorities.Add("-", 2);
-            _operaorPriorities.Add("*", 1);
-            _operaorPriorities.Add("/", 1);
+            _operators = operators;
         }
 
         public IExpressionNode Parse(string str)
@@ -38,9 +35,10 @@ namespace ExpressionParser.Core.Parser
             var op = "";
             int opIndex= -1;
 
-            for (int priority = 2; priority >= 0; priority--)
+            var maxPriority = _operators.Select(o => o.Priority).Max();
+            for (int priority = 0; priority <= maxPriority; priority++)
             {
-                var ops = _operaorPriorities.Where(kv => kv.Value == priority).Select(kv => kv.Key);
+                var ops = _operators.Where(opr => opr.Priority == priority);
                 for (var index = str.Length - 1; index >= 0; index--)
                 {
                     if(str[index] == ')')
@@ -62,7 +60,7 @@ namespace ExpressionParser.Core.Parser
                         }
                     }
 
-                    if (ops.Any(op1 => op1 == str[index].ToString()))
+                    if (ops.Any(op1 => op1.Operator == str[index].ToString()))
                     {
                         op = str[index].ToString();
                         opIndex = index;
@@ -104,27 +102,17 @@ namespace ExpressionParser.Core.Parser
 
         private Expression _GetNonConstantExpression(string op, Expression left, Expression right)
         {
-            Expression node = null;
+            var oprtr = _operators.SingleOrDefault(o => o.Operator == op);
 
-            switch (op)
+            if (oprtr != null)
             {
-                case "+":
-                    node = Expression.Add(left, right);
-                    break;
-                case "-":
-                    node = Expression.Subtract(left, right);
-                    break;
-                case "*":
-                    node = Expression.Multiply(left, right);
-                    break;
-                case "/":
-                    node = Expression.Divide(left, right);
-                    break;
-                default:
-                    throw new ApplicationException("Unknown operator");
+                var node = oprtr.GetExpression(left, right);
+                return node;
             }
-
-            return node;
+            else
+            {
+                throw new ApplicationException("Unknown operator");
+            }
         }
 
         private System.Linq.Expressions.ConstantExpression _ParseConstant(string str)

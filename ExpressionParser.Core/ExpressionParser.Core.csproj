@@ -46,7 +46,9 @@
     <Compile Include="Expression\MinusExpression.cs" />
     <Compile Include="Expression\NetExpressionNodeAdapter.cs" />
     <Compile Include="Parser\IExpressionParser.cs" />
+    <Compile Include="Parser\Operator\IOperator.cs" />
     <Compile Include="Parser\NetExpressionParser.cs" />
+    <Compile Include="Parser\Operator\OperatorImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
